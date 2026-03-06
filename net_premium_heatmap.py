@@ -12,8 +12,8 @@ Directional logic (same as top_bullish_bearish_flows.py):
   PUT  at bid  → bullish  (customers selling / writing puts)
 
 Net premium = sum(bullish premium − bearish premium) grouped by (strike, expiry).
-  Positive (green)  → net buying pressure at that strike
-  Negative (red)    → net selling / put-buying pressure at that strike
+  Positive (green)  → magnet: options bought at that strike, price pulled toward it
+  Negative (red)    → repel:  options sold at that strike, price pushed away (ceiling/floor)
 
 Uses:
   GET /api/screener/option-contracts   — contract-level premium + ask/bid side
@@ -447,7 +447,7 @@ def _fmt_prem(value: float) -> str:
 
 
 def _cell_bg(value: float, max_abs: float) -> str:
-    """Green = net bullish premium; Red = net bearish premium (dark theme)."""
+    """Green = magnet (bought at strike); Red = repel (sold at strike). Dark theme."""
     if max_abs <= 0:
         return "#2d2d2d"
     intensity = min(abs(value) / max_abs, 1.0)
@@ -496,7 +496,7 @@ class NetPremiumHeatMapGUI:
         self.as_of_date: Optional[date] = None
 
         self.root = tk.Tk()
-        self.root.title("Net Premium Heat Map")
+        self.root.title("Net Premium Heat Map — Magnet / Repel")
         self.root.configure(bg=self.BG_DARK)
         self.root.minsize(900, 600)
         self.root.geometry("1150x720")
@@ -568,6 +568,21 @@ class NetPremiumHeatMapGUI:
             fg="#6e6e6e", bg=self.BG_DARK, font=("Segoe UI", 9, "italic"),
         )
         self._note_label.pack(side=tk.LEFT, padx=(20, 0))
+
+        # Magnet / repel legend
+        legend_frame = tk.Frame(content, bg=self.BG_DARK)
+        legend_frame.pack(anchor=tk.W, pady=(0, 8))
+        tk.Label(
+            legend_frame, text="Green = magnet (options bought → price pulled to strike)",
+            fg="#6ab04c", bg=self.BG_DARK, font=("Segoe UI", 9),
+        ).pack(side=tk.LEFT)
+        tk.Label(
+            legend_frame, text="  ·  ", fg="#6e6e6e", bg=self.BG_DARK, font=("Segoe UI", 9),
+        ).pack(side=tk.LEFT)
+        tk.Label(
+            legend_frame, text="Red = repel (options sold → price pushed away)",
+            fg="#e55039", bg=self.BG_DARK, font=("Segoe UI", 9),
+        ).pack(side=tk.LEFT)
 
         # Scrollable grid
         grid_frame = tk.Frame(content, bg=self.BG_DARK)
